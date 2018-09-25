@@ -1,12 +1,7 @@
 module MultiFetchFragments
-  extend ActiveSupport::Concern
-
-  included do
-    alias_method_chain :render_collection, :multi_fetch_cache
-  end
 
   private
-    def render_collection_with_multi_fetch_cache
+    def render_collection
 
       return nil if @collection.blank?
 
@@ -24,7 +19,6 @@ module MultiFetchFragments
         @collection.each do |item|
           key = @options[:cache].respond_to?(:call) ? @options[:cache].call(item) : item
 
-          key_with_optional_digest = nil
           if defined?(@view.fragment_name_with_digest)
             key_with_optional_digest = @view.fragment_name_with_digest(key, @view.view_cache_dependencies)
           elsif defined?(@view.cache_fragment_name)
@@ -84,9 +78,7 @@ module MultiFetchFragments
 
   class Railtie < Rails::Railtie
     initializer "multi_fetch_fragments.initialize" do |app|
-      ActionView::PartialRenderer.class_eval do
-        include MultiFetchFragments
-      end
+      ActionView::PartialRenderer.prepend(MultiFetchFragments)
     end
   end
 end
